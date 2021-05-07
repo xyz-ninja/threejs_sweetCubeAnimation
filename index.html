@@ -1,0 +1,74 @@
+<html>
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+	<style>
+		body { margin: 0; }
+	</style>
+</heda>
+<body>
+
+	<script id="fragShader" type="shader-code">
+		uniform vec2 resolution;
+		uniform vec3 extraColor;
+		uniform sampler2D texture; 
+
+		void main() {
+			// нормализуем координаты
+			vec2 pos = gl_FragCoord.xy / resolution.xy;
+			vec4 tex_color_data = texture2D(texture,pos);
+
+			gl_FragColor = vec4(tex_color_data.r, extraColor.g ,tex_color_data.b,1.0);
+		}	
+	</script>
+
+	<script>
+		THREE.ImageUtils.crossOrigin = ''; // позволяет загружать внешние изображения
+		var tex = THREE.ImageUtils.loadTexture("https://tutsplus.github.io/Beginners-Guide-to-Shaders/Part2/SIPI_Jelly_Beans.jpg");
+
+		var shaderCode = document.getElementById("fragShader").innerHTML;
+		var uniforms = {};
+		uniforms.resolution = { type : 'v2' , value : new THREE.Vector2(window.innerWidth,window.innerHeight) };
+		uniforms.extraColor = { type : 'c' , value : new THREE.Color(0.0 , 0.0 , 0.0 , 1.0)};
+		uniforms.texture = { type : 't', value : tex };
+
+		var scene;
+		var camera;
+		var renderer;
+		function scene_setup(){
+
+			scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+		}
+		scene_setup();
+		
+		var material = new THREE.ShaderMaterial({uniforms:uniforms, fragmentShader:shaderCode});
+		var geometry = new THREE.BoxGeometry( 1 , 1 , 1 );
+		var sprite = new THREE.Mesh(geometry , material);
+		scene.add( sprite );
+		sprite.position.z = -3;
+
+		
+		var timer = 0
+		function render() {
+
+			sprite.rotation.x += 0.02;
+			sprite.rotation.z += 0.03;
+
+			uniforms.resolution.value.x = window.innerWidth;
+			uniforms.resolution.value.y = window.innerHeight;
+
+			uniforms.extraColor.value.g = Math.abs(Math.cos(timer));
+
+			requestAnimationFrame( render );
+			renderer.render( scene, camera );
+			
+			timer += 0.01;
+		}
+		render();
+	</script>
+</body>
+</html>
